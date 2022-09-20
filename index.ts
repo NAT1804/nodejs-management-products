@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import connect from "./db/connect";
-import log from "./logger";
+import connect from "./src/db/connect";
+import log from "./src/logger";
 
 dotenv.config();
 
