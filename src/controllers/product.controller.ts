@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
-import mongoose from "mongoose";
+import mongoose, { CallbackError, Document } from "mongoose";
 
 import ProductModel from "../models/product.model";
+import log from "../logger";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const postMessages = await ProductModel.find();
-
+    log.info("Get all products successfully");
     res.status(200).json(postMessages);
   } catch (error: any) {
+    log.error("Get all products failed");
     res.status(404).json({ message: error.message });
   }
 };
@@ -20,34 +22,47 @@ export const createProduct = async (req: Request, res: Response) => {
 
   try {
     await newProduct.save();
-
+    log.info("Product created successfully");
     res.status(201).json(newProduct);
   } catch (error: any) {
+    log.error("Product created failed");
     res.status(409).json({ message: error.message });
   }
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
-  const { id: _id } = req.params;
+  const { id } = req.params;
   const product = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(_id))
-    return res.status(404).send("No product with that id");
-
-  const updateProduct = await ProductModel.findByIdAndUpdate(_id, product, {
-    new: true,
-  });
-
-  res.json(updateProduct);
+  try {
+    const updateProduct = await ProductModel.findOneAndUpdate(
+      { productId: id },
+      product,
+      {
+        new: true,
+      }
+    );
+    log.info(`Product updated successfully`);
+    res.json(updateProduct);
+  } catch (error) {
+    log.error(error);
+    log.error(`No product with id ${id} for updating`);
+    res.status(404).send("No product with that id");
+  }
 };
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteProduct = (req: Request, res: Response) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send("No product with that id");
-
-  await ProductModel.findByIdAndRemove(id);
-
-  res.json({ message: "Product deleted successfully" });
+  ProductModel.findOneAndRemove(
+    { productId: id },
+    function (err: CallbackError, doc: Document) {
+      if (err) {
+        log.error(err);
+      } else {
+        log.info(`Product deleted successfully`);
+        res.json({ message: "Product deleted successfully" });
+      }
+    }
+  );
 };
