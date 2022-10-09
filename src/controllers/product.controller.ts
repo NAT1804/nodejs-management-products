@@ -45,7 +45,6 @@ export const updateProduct = async (req: Request, res: Response) => {
     log.info(`Product updated successfully`);
     res.json(updateProduct);
   } catch (error) {
-    log.error(error);
     log.error(`No product with id ${id} for updating`);
     res.status(404).send("No product with that id");
   }
